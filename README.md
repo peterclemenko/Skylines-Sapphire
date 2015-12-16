@@ -4,7 +4,7 @@ Quartz is a UI reskin framework/ mod for Cities: Skylines build from the origina
 
 This project would not have been possible without the great work done by Alexander Dzhoganov on the original Sapphire
 
-### Subscribe to Quartz on [Steam Workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=421770876)
+### Subscribe to Quartz on [Steam Workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=576970398)
 
 ### Read [Sapphire: Beginner's Guide](https://github.com/AlexanderDzhoganov/Skylines-Sapphire/wiki/Sapphire:-Beginner's-Guide)
 
