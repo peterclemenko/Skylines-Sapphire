@@ -14,6 +14,10 @@
 			<relativePosition sticky="true">1866.0, -944.0</relativePosition> 
 		</Component>
 		
+		<Component name="ZoomComposite">
+			<relativePosition>4.0, 4.0</relativePosition>
+		</Component>
+		
 		<Component name="Sprite">
 			<isVisible>false</isVisible>
 		</Component>

@@ -47,6 +47,13 @@
 			</Component>
 		</Component>
 		
+		<Component name="TutorialAdvisorPanel">
+			<Component name="Caption">
+				<Component name="Title">
+					<textColor>Black</textColor>	
+				</Component>
+			</Component>
+		</Component>
 		
 		<Component name="(Library) ZonedBuildingWorldInfoPanel">
 			<Component name="InfoGroupPanel">
@@ -122,6 +129,11 @@
 		</Component>
 		
 		<Component name="(Library) DistrictWorldInfoPanel">
+			<Component name="SpecializationPanel">
+				<Component name="Specialization">
+					<textColor>Black</textColor>
+				</Component>
+			</Component>
 			
 			<Component name="AgePanel">
 				<Component name=".*" name_regex="true" recursive="true" optional="true">
