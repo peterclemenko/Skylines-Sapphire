@@ -8,18 +8,18 @@ namespace Quartz
         private readonly Rect _windowRect = new Rect(Screen.width*0.5f-256.0f, Screen.height*0.5f-128.0f, 512.0f, 256.0f);
         public string Message;
 
-        public static ExceptionDialog currentDialog;
+        public static ExceptionDialog CurrentDialog;
 
         public static void Show(string message)
         {
-            if (currentDialog != null)
+            if (CurrentDialog != null)
             {
                 return;
             }
 
 			var go = new GameObject("QuartzExceptionDialog");
-            currentDialog = go.AddComponent<ExceptionDialog>();
-            currentDialog.Message = message;
+            CurrentDialog = go.AddComponent<ExceptionDialog>();
+            CurrentDialog.Message = message;
         }
 
         void OnGUI()

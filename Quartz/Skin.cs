@@ -15,6 +15,8 @@ namespace Quartz
         public string Name;
         public string Author;
         public string Path;
+
+	    public bool Legacy;
     }
 
     public class Skin
@@ -63,7 +65,7 @@ namespace Quartz
             {
                 var document = new XmlDocument();
                 document.LoadXml(File.ReadAllText(skinXmlPath));
-	            bool legacy = true; // TODO: make conditional
+				bool legacy = true; // TODO: make conditional
                 var root = document.SelectSingleNode("/SapphireSkin"); //TODO: Load Quartz
                 if (root == null)
                 {
@@ -72,7 +74,7 @@ namespace Quartz
 
                 var name = XmlUtil.GetStringAttribute(root, "name");
                 var author = XmlUtil.GetStringAttribute(root, "author");
-                metadata = new SkinMetadata {Name = legacy ? name + " [Legacy]" : name, Author = author, Path = Path.GetDirectoryName(skinXmlPath)};
+                metadata = new SkinMetadata {Name = name, Author = author, Path = Path.GetDirectoryName(skinXmlPath), Legacy = legacy};
             }
             catch (XmlNodeException ex)
             {
@@ -328,7 +330,7 @@ namespace Quartz
         {
             Debug.LogWarning("Loading skin settings");
 
-            var rootSettingsNode = document.SelectSingleNode("/SapphireSkin/SkinSettings");
+            var rootSettingsNode = document.SelectSingleNode("/SapphireSkin/SkinSettings"); //TODO: make Quartz with fallback
 
             if (rootSettingsNode == null)
             {

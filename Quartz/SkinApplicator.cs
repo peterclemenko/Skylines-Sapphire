@@ -119,8 +119,13 @@ namespace Quartz
                 {
                     return;
                 }
+				if (ConfigManager.IgnoreMissingComponents)
+	            {
+					Debug.LogWarning(string.Format("Component: {0} doesn't contain {1} - node: {3}", setNode.Name, component, node));
+		            return;
+	            }
 
-                throw new MissingComponentPropertyException(setNode.Name, component, node);
+	            throw new MissingComponentPropertyException(setNode.Name, component, node);
             }
 
             if (!property.CanWrite)

@@ -110,7 +110,7 @@ namespace Quartz
                 }
             }
 
-            if (depth == 0 && !results.Any() && !optional)
+            if (depth == 0 && !results.Any() && !optional && !ConfigManager.IgnoreMissingComponents)
             {
                 throw new MissingUIComponentException(childName, component, node);
             }

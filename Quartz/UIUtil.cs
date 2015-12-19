@@ -6,8 +6,9 @@ namespace Quartz
     public static class UIUtil
     {
 
-        public static UIButton CreateSapphireButton(Skin.ModuleClass moduleClass)
+        public static UIButton CreateQuartzButton(Skin.ModuleClass moduleClass)
         {
+			Debug.Log("Creating button");
             var uiView = GameObject.Find("UIView").GetComponent<UIView>();
             if (uiView == null)
             {

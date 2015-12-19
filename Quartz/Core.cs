@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using ColossalFramework.IO;
+using ColossalFramework.Plugins;
 using ColossalFramework.UI;
 using UnityEngine;
 
@@ -17,13 +19,22 @@ namespace Quartz
 
         public static void Bootstrap(Skin.ModuleClass moduleClass)
         {
-			Debug.LogWarning("Trying to bootstrap moduleClass: " + Enum.GetName(typeof(Skin.ModuleClass), moduleClass));
-            if (_bootstrapped)
-            {
+			if (!MyInfo().isEnabled)
+			{
 				Deinitialize();
-				Debug.LogWarning("Stopped bootstrapping moduleClass: " + Enum.GetName(typeof(Skin.ModuleClass), moduleClass) + " because bootstrap was true");
-                //return; //TODO: Fix right, it doesn't work because it skips rebootstrapping because it was already bootstrapped on main menu
+				return;
+			}
+			Debug.LogWarning("Trying to bootstrap moduleClass: " + Enum.GetName(typeof(Skin.ModuleClass), moduleClass) + " status of bootstrap is: " + _bootstrapped);
+			if (_bootstrapped && moduleClass != _currentModuleClass)
+            {
+				Debug.LogWarning("De-strapping moduleClass: " + Enum.GetName(typeof(Skin.ModuleClass), moduleClass) + " because bootstrap was " + _bootstrapped);
+				Deinitialize();
             }
+			else if (_bootstrapped && moduleClass == _currentModuleClass)
+			{
+				Debug.Log("Already bootstrapped for this class, skipping");
+				return;
+			}
 
             ErrorLogger.ResetSettings();
 
@@ -43,14 +54,16 @@ namespace Quartz
             }
         }
 
-        public static string OverrideDirectory = Path.Combine(DataLocation.localApplicationData,
-			Path.Combine("Quartz", "Override")); //TODO: change to Quartz with a legacy fallback
-
-		private static readonly string ConfigPath = Path.Combine(DataLocation.localApplicationData, Path.Combine("Quartz", "QuartzConfig.xml")); //TODO: change to Quartz with a legacy fallback
-        private Configuration _config = new Configuration();
+        public static string OverrideDirectory = Path.Combine(DataLocation.localApplicationData, Path.Combine("Quartz", "Override"));
 
         private List<SkinMetadata> _availableSkins;
         private Skin _currentSkin;
+
+		public static PluginManager.PluginInfo MyInfo()
+		{
+			var quartzPlugin = PluginManager.instance.GetPluginsInfo().FirstOrDefault(p => (p.publishedFileID.AsUInt64 == 576970398 || (p.modPath.Contains(@"AppData\Local\") && p.name == "Quartz")));
+			return quartzPlugin;
+		}
 
         private DebugRenderer _debugRenderer;
 
@@ -59,21 +72,6 @@ namespace Quartz
 
         private UIButton _quartzButton;
         private UIPanel _quartzPanel;
-
-        private void LoadConfig()
-        {
-			_config = Configuration.Deserialize(ConfigPath); //TODO: change to Quartz with a legacy fallback
-            if (_config == null)
-            {
-                _config = new Configuration();
-                SaveConfig();
-            }
-        }
-
-        private void SaveConfig()
-        {
-            Configuration.Serialize(ConfigPath, _config);
-        }
 
         void OnDestroy()
         {
@@ -85,16 +83,17 @@ namespace Quartz
                 }
 
                 _currentSkin = null;
-                _config = null;
 
                 if (_quartzPanel != null)
                 {
+					Debug.Log("Unload Quartz Panel");
                     Destroy(_quartzPanel);
                 }
 
                 if (_quartzButton != null)
                 {
-                    Destroy(_quartzButton);
+					Debug.Log("Unload Quartz Button");
+					Destroy(_quartzButton);
                 }
 
                 SetCameraRectHelper.Deinitialize();
@@ -111,9 +110,13 @@ namespace Quartz
 
         void Start()
         {
+			Debug.Log("Start ran!");
+			if (!MyInfo().isEnabled)
+			{
+				Deinitialize();
+				return;
+			}
             SetCameraRectHelper.Initialize();
-
-            LoadConfig();
 
             if (!Directory.Exists(OverrideDirectory))
             {
@@ -130,12 +133,12 @@ namespace Quartz
             InitializeInGamePanels();
 
             _availableSkins = SkinLoader.FindAllSkins();
-            
-            if (!string.IsNullOrEmpty(_config.SelectedSkinPath) && _config.ApplySkinOnStartup)
+
+			if (!string.IsNullOrEmpty(ConfigManager.SelectedSkinPath) && ConfigManager.ApplySkinOnStartup)
             {
                 foreach (var metadata in _availableSkins)
                 {
-                    if (metadata.Path == _config.SelectedSkinPath)
+					if (metadata.Path == ConfigManager.SelectedSkinPath)
                     {
                         _currentSkin = Skin.FromXmlFile(Path.Combine(metadata.Path, "skin.xml"), false);
                         _needToApplyCurrentSkin = true;
@@ -205,7 +208,7 @@ namespace Quartz
                         _debugRenderer.drawDebugInfo = !_debugRenderer.drawDebugInfo;
                     }
                 }
-                else if (Input.GetKeyDown(KeyCode.S))
+                else if (Input.GetKeyDown(KeyCode.S) && Input.GetKey(KeyCode.LeftShift))
                 {
                     ReloadAndApplyActiveSkin();
                 }
@@ -242,9 +245,9 @@ namespace Quartz
         private void CreateUI()
         {
             _quartzPanel = CreateQuartzPanel();
-            _quartzButton = UIUtil.CreateSapphireButton(_currentModuleClass);
+			_quartzButton = UIUtil.CreateQuartzButton(_currentModuleClass);
 
-            if (_currentModuleClass == Skin.ModuleClass.InGame && !_config.ShowSapphireIconInGame)
+			if (_currentModuleClass == Skin.ModuleClass.InGame && !ConfigManager.ShowQuartzIconInGame)
             {
                 _quartzButton.isVisible = false;
             }
@@ -280,12 +283,14 @@ namespace Quartz
 
 	        if (panel != null)
 	        {
-		        panel.size = new Vector2(300, 250);
+		        panel.size = new Vector2(300, 290);
 		        panel.isVisible = false;
 		        panel.atlas = EmbeddedResources.GetQuartzAtlas();
 		        panel.backgroundSprite = "DefaultPanelBackground";
 
-		        panel.relativePosition = _currentModuleClass == Skin.ModuleClass.MainMenu ? new Vector3(2.0f, 34.0f) : new Vector3(2.0f, 34.0f + 64.0f);
+				Vector2 viewSize = uiView.GetScreenResolution();
+
+		        panel.relativePosition = _currentModuleClass == Skin.ModuleClass.MainMenu ? new Vector3(viewSize.x - 2.0f - panel.size.x, 34.0f) : new Vector3(viewSize.x - 2.0f - panel.size.x, 34.0f + 64.0f);
 
 				panel.name = "QuartzSkinManager";
 
@@ -297,12 +302,11 @@ namespace Quartz
 
             float y = 32.0f;
 
-			UIUtil.MakeCheckbox(panel, "ShowIconInGame", "Show Quartz icon in-game", new Vector2(4.0f, y), _config.ShowSapphireIconInGame, value =>
+			UIUtil.MakeCheckbox(panel, "ShowIconInGame", "Show Quartz icon in-game", new Vector2(4.0f, y), ConfigManager.ShowQuartzIconInGame, value =>
             {
-                _config.ShowSapphireIconInGame = value;
-                SaveConfig();
+				ConfigManager.ShowQuartzIconInGame = value;
 
-                if (_quartzButton != null && !_config.ShowSapphireIconInGame && _currentModuleClass == Skin.ModuleClass.InGame)
+                if (_quartzButton != null && !ConfigManager.ShowQuartzIconInGame && _currentModuleClass == Skin.ModuleClass.InGame)
                 {
                     _quartzButton.isVisible = false;
                     if (_quartzPanel != null)
@@ -318,10 +322,9 @@ namespace Quartz
 
             y += 28.0f;
 
-            UIUtil.MakeCheckbox(panel, "AutoApplySkin", "Apply skin on start-up", new Vector2(4.0f, y), _config.ApplySkinOnStartup, value =>
+			UIUtil.MakeCheckbox(panel, "AutoApplySkin", "Apply skin on start-up", new Vector2(4.0f, y), ConfigManager.ApplySkinOnStartup, value =>
             {
-                _config.ApplySkinOnStartup = value;
-                SaveConfig();
+				ConfigManager.ApplySkinOnStartup = value;
             });
 
             y += 28.0f;
@@ -342,6 +345,12 @@ namespace Quartz
                 ReloadAndApplyActiveSkin();
             });
 
+			y += 28.0f;
+
+			UIUtil.MakeCheckbox(panel, "IgnoreMissing", "Force load (May break stuff)", new Vector2(4.0f, y), ConfigManager.IgnoreMissingComponents, value =>
+			{
+				ConfigManager.IgnoreMissingComponents = value;
+			});
 
             y += 28.0f;
 
@@ -350,7 +359,7 @@ namespace Quartz
             _skinsDropdown.AddItem("Vanilla (by Colossal Order)");
             foreach (var skin in _availableSkins)
             {
-                _skinsDropdown.AddItem(String.Format("{0} (by {1})", skin.Name, skin.Author));
+                _skinsDropdown.AddItem(String.Format("{0} (by {1}){2}", skin.Name, skin.Author, skin.Legacy ? " [LEGACY]" : string.Empty));
             }
 
             _skinsDropdown.size = new Vector2(296.0f, 32.0f);
@@ -421,10 +430,9 @@ namespace Quartz
                 else
                 {
                     Debug.LogWarning("Skin is invalid, will not apply.. (check messages above for errors)");
-                } 
-                
-                _config.SelectedSkinPath = _currentSkin.SapphirePath;
-                SaveConfig();
+                }
+
+				ConfigManager.SelectedSkinPath = _currentSkin.SapphirePath;
                 panel.isVisible = false;
             };
                         
@@ -449,7 +457,7 @@ namespace Quartz
 
             y += 40.0f;
 
-            UIUtil.MakeButton(panel, "ReloadSkin", "Reload active skin (Ctrl+S)", new Vector2(4.0f, y), ReloadAndApplyActiveSkin);
+            UIUtil.MakeButton(panel, "ReloadSkin", "Reload active skin (Ctrl+Shift+S)", new Vector2(4.0f, y), ReloadAndApplyActiveSkin);
 
             y += 36.0f;
 

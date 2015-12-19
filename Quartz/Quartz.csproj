@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="AtlasPacker.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="ConfigManager.cs" />
     <Compile Include="DebugRenderer.cs" />
     <Compile Include="Detours.cs" />
     <Compile Include="EmbeddedResources.cs" />

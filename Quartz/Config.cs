@@ -1,57 +1,63 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Xml.Serialization;
+using ColossalFramework.IO;
+using UnityEngine;
 
 namespace Quartz
 {
 
-    public class Configuration
-    {
+	public class Configuration
+	{
 
-        public bool ShowSapphireIconInGame = true;
-        public bool ApplySkinOnStartup = false;
-        public string SelectedSkinPath = "";
+		public bool ShowQuartzIconInGame = true;
+		public bool ApplySkinOnStartup = false;
+		public string SelectedSkinPath = "";
+		public bool IgnoreMissingComponents = false;
 
-        public void OnPreSerialize()
-        {
-        }
+		private void OnPreSerialize()
+		{
+		}
 
-        public void OnPostDeserialize()
-        {
-        }
+		private void OnPostDeserialize()
+		{
+		}
 
-        public static void Serialize(string filename, Configuration config)
-        {
-            var serializer = new XmlSerializer(typeof(Configuration));
+		public void Serialize(string filename)
+		{
+			var serializer = new XmlSerializer(typeof (Configuration));
 
-            if (!Directory.Exists(Path.GetDirectoryName(filename)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(filename));
-            }
+			if (!Directory.Exists(Path.GetDirectoryName(filename)))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(filename));
+			}
 
-            using (var writer = new StreamWriter(filename))
-            {
-                config.OnPreSerialize();
-                serializer.Serialize(writer, config);
-            }
-        }
+			using (var writer = new StreamWriter(filename))
+			{
+				OnPreSerialize();
+				serializer.Serialize(writer, this);
+			}
+		}
 
-        public static Configuration Deserialize(string filename)
-        {
-            var serializer = new XmlSerializer(typeof(Configuration));
+		public Configuration Deserialize(string filename)
+		{
+			var serializer = new XmlSerializer(typeof (Configuration));
 
-            try
-            {
-                using (var reader = new StreamReader(filename))
-                {
-                    var config = (Configuration)serializer.Deserialize(reader);
-                    config.OnPostDeserialize();
-                    return config;
-                }
-            }
-            catch { }
+			try
+			{
+				using (var reader = new StreamReader(filename))
+				{
+					var config = (Configuration) serializer.Deserialize(reader);
+					OnPostDeserialize();
+					return config;
+				}
+			}
+			catch(Exception ex)
+			{
+				Debug.LogError("Could not load configuration " + ex);
+			}
 
-            return null;
-        }
-    }
-
+			return null;
+		}
+	}
 }
