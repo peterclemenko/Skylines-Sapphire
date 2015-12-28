@@ -23,6 +23,10 @@ namespace Quartz
 			}
 			set
 			{
+				if (_config == null)
+				{
+					LoadConfig();
+				}
 				_config.ShowQuartzIconInGame = value;
 				SaveConfig();
 			}
@@ -40,6 +44,10 @@ namespace Quartz
 			}
 			set
 			{
+				if (_config == null)
+				{
+					LoadConfig();
+				}
 				_config.ApplySkinOnStartup = value;
 				SaveConfig();
 			}
@@ -56,6 +64,10 @@ namespace Quartz
 			}
 			set
 			{
+				if (_config == null)
+				{
+					LoadConfig();
+				}
 				_config.SelectedSkinPath = value;
 				SaveConfig();
 			}
@@ -72,6 +84,10 @@ namespace Quartz
 			}
 			set
 			{
+				if (_config == null)
+				{
+					LoadConfig();
+				}
 				_config.IgnoreMissingComponents = value;
 				SaveConfig();
 			}
@@ -83,10 +99,12 @@ namespace Quartz
 		
 		private static void LoadConfig()
 		{
+			Debug.Log("Loading config");
 			if (_config == null)
 			{
 				_config = new Configuration();
 			}
+
 			_config = _config.Deserialize(FileName);
 		}
 

@@ -57,7 +57,8 @@ namespace Quartz
 				Debug.LogError("Could not load configuration " + ex);
 			}
 
-			return null;
+			Debug.Log("Failed to deserialize, returning what we already had");
+			return this;
 		}
 	}
 }
